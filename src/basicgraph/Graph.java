@@ -122,9 +122,41 @@ public abstract class Graph {
 	 */
 	public List<Integer> degreeSequence() {
 		// XXX: Implement in part 1 of week 1
-		return null;
+		Map<Integer, Integer> degrees = new TreeMap<>();
+		for (Integer i : getVertices()) {
+			List<Integer> inNeighbours = getInNeighbors(i);
+			//count the in-degrees
+			for (Integer in : inNeighbours) {
+				updateDegreeCount(degrees, in);
+			}
+			List<Integer> neighbours = getNeighbors(i);
+			//count the out-degrees
+			for (Integer n : neighbours) {
+				updateDegreeCount(degrees, n);
+			}
+		}
+		List<Integer> degSeq = new ArrayList<>();
+		degSeq.addAll(degrees.values());
+		Collections.sort(degSeq);
+		Collections.reverse(degSeq);
+		return degSeq;
 	}
-	
+
+
+	private void updateDegreeCount(Map<Integer, Integer> degrees, Integer in) {
+		if (degrees.containsKey(in)) {
+			degrees.put(in, degrees.get(in) + 1);
+		} else {
+			degrees.put(in, 1);
+		}
+	}
+
+	/**
+	 * Get all the vertices in the graph.
+	 * @return
+	 */
+	public abstract List<Integer> getVertices();
+
 	/**
 	 * Get all the vertices that are 2 away from the vertex in question.
 	 * @param v The starting vertex
@@ -240,7 +272,8 @@ public abstract class Graph {
 		
 		System.out.println("****");
 		System.out.println("Roads / intersections:");
-		GraphAdjList graphFromFile = new GraphAdjList();
+//		GraphAdjList graphFromFile = new GraphAdjList();
+		GraphAdjMatrix graphFromFile = new GraphAdjMatrix();
 		GraphLoader.loadRoadMap("data/testdata/simpletest.map", graphFromFile);
 		System.out.println(graphFromFile);
 		
@@ -252,10 +285,16 @@ public abstract class Graph {
 		// You can test with real road data here.  Use the data files in data/maps
 		
 		System.out.println("Flight data:");
-		GraphAdjList airportGraph = new GraphAdjList();
+//		GraphAdjList airportGraph = new GraphAdjList();
+		GraphAdjMatrix airportGraph = new GraphAdjMatrix();
 		GraphLoader.loadRoutes("data/airports/routesUA.dat", airportGraph);
 		System.out.println(airportGraph);
 		System.out.println("Observe most degrees are small (1-30), eight are over 100.");
+		for (Integer deg : airportGraph.degreeSequence()) {
+			if (deg >= 100) {
+				System.out.println(deg);
+			}
+		}
 		System.out.println("****");
 		
 		//For testing Part 2 functionality

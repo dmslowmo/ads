@@ -1,10 +1,8 @@
 package basicgraph;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /** A class that implements a directed graph. 
  * The graph may have self-loops, parallel edges. 
@@ -25,7 +23,16 @@ public class GraphAdjMatrix extends Graph {
 	public GraphAdjMatrix () {
 		adjMatrix = new int[defaultNumVertices][defaultNumVertices];
 	}
-	
+
+	@Override
+	public List<Integer> getVertices() {
+		List<Integer> vertices = new ArrayList<Integer>();
+		for (int i = 0; i < adjMatrix.length; i++) {
+			vertices.add(i);
+		}
+		return vertices;
+	}
+
 	/** 
 	 * Implement the abstract method for adding a vertex.
 	 * If need to increase dimensions of matrix, double them
@@ -104,8 +111,21 @@ public class GraphAdjMatrix extends Graph {
 	 * @return List<Integer> a list of indices of vertices.  
 	 */	
 	public List<Integer> getDistance2(int v) {
-		// XXX Implement this method in week 1
-		return null;
+		List<Integer> oneHop = new ArrayList<>();
+		addVertex(v, oneHop);
+		List<Integer> twoHop = new ArrayList<Integer>();
+		for (Integer n : oneHop) {
+			addVertex(n, twoHop);
+		}
+		return new ArrayList<Integer>(twoHop);
+	}
+
+	private void addVertex(int v, Collection<Integer> vertices) {
+		for (int i = 0; i < getNumVertices(); i++) {
+			if (adjMatrix[v][i] > 0) {
+				vertices.add(i);
+			}
+		}
 	}
 	
 	/**
