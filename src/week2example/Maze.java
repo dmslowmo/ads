@@ -203,6 +203,7 @@ public class Maze {
 		MazeNode start = cells[startRow][startCol];
 		MazeNode goal = cells[endRow][endCol];
 
+		// initialization
 		if (start == null || goal == null) {
 			System.out.println("Start or goal node is null!  No path exists.");
 			return new LinkedList<MazeNode>();
@@ -212,6 +213,18 @@ public class Maze {
 		Queue<MazeNode> toExplore = new LinkedList<MazeNode>();
 		HashMap<MazeNode, MazeNode> parentMap = new HashMap<MazeNode, MazeNode>();
 		toExplore.add(start);
+		boolean found = bfsSearch(goal, visited, toExplore, parentMap);
+
+		if (!found) {
+			System.out.println("No path exists");
+			return new ArrayList<MazeNode>();
+		}
+		// reconstruct the path
+		return constructPath(start, goal, parentMap);
+	}
+
+	private boolean bfsSearch(MazeNode goal, HashSet<MazeNode> visited, Queue<MazeNode> toExplore,
+			HashMap<MazeNode, MazeNode> parentMap) {
 		boolean found = false;
 		while (!toExplore.isEmpty()) {
 			MazeNode curr = toExplore.remove();
@@ -230,20 +243,7 @@ public class Maze {
 				}
 			}
 		}
-
-		if (!found) {
-			System.out.println("No path exists");
-			return new ArrayList<MazeNode>();
-		}
-		// reconstruct the path
-		LinkedList<MazeNode> path = new LinkedList<MazeNode>();
-		MazeNode curr = goal;
-		while (curr != start) {
-			path.addFirst(curr);
-			curr = parentMap.get(curr);
-		}
-		path.addFirst(start);
-		return path;
+		return found;
 	}
 
 /*	public List<MazeNode> dfsRefactored(int startRow, int startCol, 
