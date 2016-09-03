@@ -8,7 +8,14 @@
 package roadgraph;
 
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -23,15 +30,15 @@ import util.GraphLoader;
  *
  */
 public class MapGraph {
-	//TODO: Add your member variables here in WEEK 2
-	
-	
+
+	private GraphAdjList graph;
+
 	/** 
 	 * Create a new empty MapGraph 
 	 */
 	public MapGraph()
 	{
-		// TODO: Implement in this constructor in WEEK 2
+		this.graph = new GraphAdjList();
 	}
 	
 	/**
@@ -40,8 +47,7 @@ public class MapGraph {
 	 */
 	public int getNumVertices()
 	{
-		//TODO: Implement this method in WEEK 2
-		return 0;
+		return this.graph.getNumVertices();
 	}
 	
 	/**
@@ -50,22 +56,18 @@ public class MapGraph {
 	 */
 	public Set<GeographicPoint> getVertices()
 	{
-		//TODO: Implement this method in WEEK 2
-		return null;
+		return this.graph.getVertices();
 	}
-	
+
 	/**
 	 * Get the number of road segments in the graph
 	 * @return The number of edges in the graph.
 	 */
 	public int getNumEdges()
 	{
-		//TODO: Implement this method in WEEK 2
-		return 0;
+		return this.graph.getNumOfEdges();
 	}
 
-	
-	
 	/** Add a node corresponding to an intersection at a Geographic Point
 	 * If the location is already in the graph or null, this method does 
 	 * not change the graph.
@@ -75,8 +77,7 @@ public class MapGraph {
 	 */
 	public boolean addVertex(GeographicPoint location)
 	{
-		// TODO: Implement this method in WEEK 2
-		return false;
+		return this.graph.addVertex(location);
 	}
 	
 	/**
@@ -92,10 +93,9 @@ public class MapGraph {
 	 *   or if the length is less than 0.
 	 */
 	public void addEdge(GeographicPoint from, GeographicPoint to, String roadName,
-			String roadType, double length) throws IllegalArgumentException {
-
-		//TODO: Implement this method in WEEK 2
-		
+			String roadType, double length) throws IllegalArgumentException
+	{
+		this.graph.addEdge(from, to, roadName, roadType, length);
 	}
 	
 
@@ -106,7 +106,8 @@ public class MapGraph {
 	 * @return The list of intersections that form the shortest (unweighted)
 	 *   path from start to goal (including both start and goal).
 	 */
-	public List<GeographicPoint> bfs(GeographicPoint start, GeographicPoint goal) {
+	public List<GeographicPoint> bfs(GeographicPoint start, GeographicPoint goal)
+	{
 		// Dummy variable for calling the search algorithms
         Consumer<GeographicPoint> temp = (x) -> {};
         return bfs(start, goal, temp);
@@ -123,12 +124,53 @@ public class MapGraph {
 	public List<GeographicPoint> bfs(GeographicPoint start, 
 			 					     GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
-		// TODO: Implement this method in WEEK 2
-		
+		if (!this.graph.contains(start)) {
+			return null;
+		}
+		Queue<GeographicPoint> next = new ArrayDeque<>();
+		Set<GeographicPoint> visited = new HashSet<>();
+		GeographicPoint current = null;
+		Map<GeographicPoint, GeographicPoint> parentMap = new HashMap<>();
+
+		next.add(start);
+		visited.add(start);
+		while (!next.isEmpty()) {
+			current = next.remove();
+			if (GraphUtil.isSameNode(current, goal)) {
+				return reconstructPath(start, current, parentMap);
+			}
+			for (GeographicPoint n : this.graph.getNeighbors(current)) {
+				if (visited.contains(n)) {
+					continue;
+				}
+				visited.add(n);
+				parentMap.put(n, current);
+				next.add(n);
+			}
+		}
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
-
 		return null;
+	}
+
+	/**
+	 * Searching the starting node, beginning from the current node, and return the path.
+	 * @param start
+	 * @param current
+	 * @param parentMap
+	 * @return path
+	 */
+	private List<GeographicPoint> reconstructPath(GeographicPoint start, GeographicPoint current,
+			Map<GeographicPoint, GeographicPoint> parentMap) {
+		List<GeographicPoint> path = new ArrayList<>();
+		GeographicPoint currv = current;
+		while (!GraphUtil.isSameNode(currv, start)) {
+			path.add(currv);
+			currv = parentMap.get(currv);
+		}
+		path.add(start);
+		Collections.reverse(path);
+		return path;
 	}
 	
 
