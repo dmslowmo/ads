@@ -30,15 +30,15 @@ import util.GraphLoader;
  *
  */
 public class MapGraph {
-
-	private GraphAdjList graph;
-
+	private int numEdges = 0;
+	private List<MapNode> nodes;
+	
 	/** 
 	 * Create a new empty MapGraph 
 	 */
 	public MapGraph()
 	{
-		this.graph = new GraphAdjList();
+		nodes = new ArrayList<MapNode>();
 	}
 	
 	/**
@@ -47,7 +47,7 @@ public class MapGraph {
 	 */
 	public int getNumVertices()
 	{
-		return this.graph.getNumVertices();
+		return nodes.size();
 	}
 	
 	/**
@@ -56,7 +56,11 @@ public class MapGraph {
 	 */
 	public Set<GeographicPoint> getVertices()
 	{
-		return this.graph.getVertices();
+		Set<GeographicPoint> vertices = new HashSet<>();
+		for (MapNode n : nodes) {
+			vertices.add(n.getLocation());
+		}
+		return vertices;
 	}
 
 	/**
@@ -65,7 +69,7 @@ public class MapGraph {
 	 */
 	public int getNumEdges()
 	{
-		return this.graph.getNumOfEdges();
+		return numEdges;
 	}
 
 	/** Add a node corresponding to an intersection at a Geographic Point
@@ -77,9 +81,18 @@ public class MapGraph {
 	 */
 	public boolean addVertex(GeographicPoint location)
 	{
-		return this.graph.addVertex(location);
+		for (MapNode n : nodes) {
+			if(isSameLocation(location, n.getLocation())) return false;
+		}
+		MapNode node = new MapNode(location);
+		nodes.add(node);
+		return true;
 	}
-	
+
+	private boolean isSameLocation(GeographicPoint a, GeographicPoint b) {
+		return (a.getX() == b.getX()) && (a.getY() == b.getY());
+	}
+
 	/**
 	 * Adds a directed edge to the graph from pt1 to pt2.  
 	 * Precondition: Both GeographicPoints have already been added to the graph
@@ -93,9 +106,36 @@ public class MapGraph {
 	 *   or if the length is less than 0.
 	 */
 	public void addEdge(GeographicPoint from, GeographicPoint to, String roadName,
-			String roadType, double length) throws IllegalArgumentException
-	{
-		this.graph.addEdge(from, to, roadName, roadType, length);
+			String roadType, double length) throws IllegalArgumentException {
+		boolean added = false;
+		added = addEdgeFrom(from, to, roadName, roadType, length, added);
+		if (!added) {
+			added = addEdgeTo(from, to, roadName, roadType, length, added);
+			if (!added) return; // should not happen, but just in case
+		}
+		++numEdges;
+	}
+
+	private boolean addEdgeTo(GeographicPoint from, GeographicPoint to, String roadName, String roadType, double length,
+			boolean added) {
+		for (MapNode node : nodes) {
+			if (isSameLocation(to, node.getLocation())) {
+				node.addEdge(from, to, roadName, roadType, length);
+				added = true;
+			}
+		}
+		return added;
+	}
+
+	private boolean addEdgeFrom(GeographicPoint from, GeographicPoint to, String roadName, String roadType,
+			double length, boolean added) {
+		for (MapNode node : nodes) {
+			if (isSameLocation(from, node.getLocation())) {
+				node.addEdge(from, to, roadName, roadType, length);
+				added = true;
+			}
+		}
+		return added;
 	}
 	
 
@@ -124,33 +164,53 @@ public class MapGraph {
 	public List<GeographicPoint> bfs(GeographicPoint start, 
 			 					     GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
-		if (!this.graph.contains(start)) {
-			return null;
+		boolean found = false;
+		for (MapNode node : nodes) {
+			if (isSameLocation(node.getLocation(), start)) {
+				found = true;
+				break;
+			}
 		}
+		if (!found) return null;
+
 		Queue<GeographicPoint> next = new ArrayDeque<>();
 		Set<GeographicPoint> visited = new HashSet<>();
-		GeographicPoint current = null;
 		Map<GeographicPoint, GeographicPoint> parentMap = new HashMap<>();
 
 		next.add(start);
 		visited.add(start);
 		while (!next.isEmpty()) {
-			current = next.remove();
-			if (GraphUtil.isSameNode(current, goal)) {
+			GeographicPoint current = next.remove();
+			if (isSameLocation(current, goal)) {
 				return reconstructPath(start, current, parentMap);
 			}
-			for (GeographicPoint n : this.graph.getNeighbors(current)) {
-				if (visited.contains(n)) {
+			//get neighbours of current node
+			List<MapEdge> edges = getEdges(current);
+			for (MapEdge edge : edges) {
+				if (visited.contains(edge.getTo())) {
 					continue;
 				}
-				visited.add(n);
-				parentMap.put(n, current);
-				next.add(n);
+				visited.add(edge.getTo());
+				parentMap.put(edge.getTo(), current);
+				next.add(edge.getTo());
 			}
 		}
+
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
 		return null;
+	}
+
+	private List<MapEdge> getEdges(GeographicPoint current) {
+		MapNode currNode = null;
+		for (MapNode node : nodes) {
+			if (isSameLocation(node.getLocation(), current)) {
+				currNode = node;
+				break;
+			}
+		}
+		List<MapEdge> edges = currNode.getEdges();
+		return edges;
 	}
 
 	/**
@@ -164,7 +224,7 @@ public class MapGraph {
 			Map<GeographicPoint, GeographicPoint> parentMap) {
 		List<GeographicPoint> path = new ArrayList<>();
 		GeographicPoint currv = current;
-		while (!GraphUtil.isSameNode(currv, start)) {
+		while (!isSameLocation(currv, start)) {
 			path.add(currv);
 			currv = parentMap.get(currv);
 		}
@@ -172,7 +232,6 @@ public class MapGraph {
 		Collections.reverse(path);
 		return path;
 	}
-	
 
 	/** Find the path from start to goal using Dijkstra's algorithm
 	 * 

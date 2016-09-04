@@ -17,7 +17,8 @@ public class MapEdge {
 	private String roadType;
 	private double length;
 
-	public MapEdge(GeographicPoint from, GeographicPoint to, String roadName, String roadType, double length) {
+	public MapEdge(GeographicPoint from, GeographicPoint to, String roadName, String roadType, double length)
+	{
 		this.from = from;
 		this.to = to;
 		this.roadName = roadName;
@@ -44,4 +45,6 @@ public class MapEdge {
 	public double getLength() {
 		return length;
 	}
+
+	
 }
