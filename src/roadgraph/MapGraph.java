@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -259,6 +260,42 @@ public class MapGraph {
 										  GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
 		// TODO: Implement this method in WEEK 3
+		Queue<Route> pq = new PriorityQueue<>();
+		Set<GeographicPoint> visited = new HashSet<>();
+		Map<GeographicPoint, GeographicPoint> parentMap = new HashMap<>();
+
+		Map<GeographicPoint, Route> routeMap = new HashMap<>();
+		routeMap.put(start, new Route(start, start, 0.0));
+		pq.add(routeMap.get(start));
+
+		Set<GeographicPoint> vertices = getVertices();
+		for (GeographicPoint v : vertices) {
+			routeMap.put(v, new Route(start, v));
+		}
+
+		while (!pq.isEmpty()) {
+			GeographicPoint curr = pq.remove().getLocation();
+
+			if (visited.contains(curr)) continue;
+
+			visited.add(curr);
+			if (GraphUtil.isSameNode(curr, goal)) return reconstructPath(start, curr, parentMap);
+			//get neighbours of current node
+			List<MapEdge> edges = getEdges(curr);
+			for (MapEdge edge : edges) {
+				if (visited.contains(edge.getTo())) {
+					continue;
+				}
+				Route n = routeMap.get(edge.getTo());
+				double distance = routeMap.get(curr).getDistanceFromOrigin() + edge.getLength();
+				if (distance < n.getDistanceFromOrigin()) {
+					n.setDistanceFromOrigin(distance);
+					routeMap.put(n.getLocation(), n);
+				}
+				parentMap.put(n.getLocation(), curr);
+				pq.add(n);
+			}
+		}
 
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
@@ -315,7 +352,6 @@ public class MapGraph {
 		 * the Week 3 End of Week Quiz, EVEN IF you score 100% on the 
 		 * programming assignment.
 		 */
-		/*
 		MapGraph simpleTestMap = new MapGraph();
 		GraphLoader.loadRoadMap("data/testdata/simpletest.map", simpleTestMap);
 		
@@ -324,6 +360,7 @@ public class MapGraph {
 		
 		System.out.println("Test 1 using simpletest: Dijkstra should be 9 and AStar should be 5");
 		List<GeographicPoint> testroute = simpleTestMap.dijkstra(testStart,testEnd);
+		System.out.println("Dijkstra path: " + testroute);
 		List<GeographicPoint> testroute2 = simpleTestMap.aStarSearch(testStart,testEnd);
 		
 		
@@ -344,11 +381,10 @@ public class MapGraph {
 		System.out.println("Test 3 using utc: Dijkstra should be 37 and AStar should be 10");
 		testroute = testMap.dijkstra(testStart,testEnd);
 		testroute2 = testMap.aStarSearch(testStart,testEnd);
-		*/
 		
 		
 		/* Use this code in Week 3 End of Week Quiz */
-		/*MapGraph theMap = new MapGraph();
+		MapGraph theMap = new MapGraph();
 		System.out.print("DONE. \nLoading the map...");
 		GraphLoader.loadRoadMap("data/maps/utc.map", theMap);
 		System.out.println("DONE.");
@@ -360,7 +396,6 @@ public class MapGraph {
 		List<GeographicPoint> route = theMap.dijkstra(start,end);
 		List<GeographicPoint> route2 = theMap.aStarSearch(start,end);
 
-		*/
 		
 	}
 	
